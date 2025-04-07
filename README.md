@@ -1,5 +1,5 @@
 # 🚀 HackToFuture 3.0 Repository Setup Guide
-#### To track your progress and collaborate effectively, every team must fork the official repository and follow the steps below.
+#### To track your progress and collaborate effectively, every team must create a new repository using the provided template and follow the steps below.
 <br>
 
 # 🧩 Use the Repository Template
@@ -16,7 +16,7 @@
 ```
 
 # 📥 Clone Your Forked Repository
-  #### Go to your forked repository on GitHub.
+  #### Go to the newly created repository on your GitHub account.
   #### Click the green "Code" button, then click the clipboard icon to copy the URL.
  
   #### Open your terminal and run the following git clone command to copy the repository to your local machine.
