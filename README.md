@@ -1,12 +1,13 @@
 # 🚀 HackToFuture 3.0 Repository Setup Guide
-#### To track your progress and collaborate effectively, every team must create a new repository using the provided template and follow the steps below.
+#### To track your progress and collaborate effectively, every team must fork the official repository and follow the steps below.
 <br>
 
-# 🧩 Use the Repository Template
-  #### Go to the GitHub page https://github.com/HackToFuture/HTF-XNN <br>
-  #### Click the "Use this template" button (found near the top right).
-  #### Select "Create a new repository".
+# 🔱 Fork the Repository
+ #### Go to the GitHub page https://github.com/HackToFuture/HTF-XNN <br>
+  #### Click on the "Fork" button in the upper-right corner of the page.
   #### Assign the repository name as "HTF - *<Team_Code>*".
+
+  <img align="center" width = "500" src = "https://docs.github.com/assets/cb-40742/mw-1440/images/help/repository/fork-button.webp" alt="fork image"/>
   
   
   ```
@@ -16,8 +17,10 @@
 ```
 
 # 📥 Clone Your Forked Repository
-  #### Go to the newly created repository on your GitHub account.
+  #### Go to your forked repository on GitHub.
   #### Click the green "Code" button, then click the clipboard icon to copy the URL.
+
+   <img align="center" width = "500" height="200" src = "https://docs.github.com/assets/cb-60499/mw-1440/images/help/repository/https-url-clone-cli.webp" alt="clone image"/>
  
   #### Open your terminal and run the following git clone command to copy the repository to your local machine.
   #### Replace *repository-url* with the URL of your forked repository.
