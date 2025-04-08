@@ -145,7 +145,7 @@ router.post('/', async (req, res) => {
       }));
   
       const { error: taskErr } = await supabase
-        .from('tasks')
+        .from('non-shift')
         .insert(taskInsertData);
   
       if (taskErr) {
@@ -154,10 +154,29 @@ router.post('/', async (req, res) => {
   
       // 🧮 Update workload for each selected employee
       for (let e of selected) {
-        await supabase
+        // First, get current workload
+        const { data, error: fetchErr } = await supabase
           .from('employees')
-          .update({ workload: supabase.rpc('increment_workload', { empid: e.empid, value: 10 }) })
+          .select('workload')
+          .eq('empid', e.empid)
+          .single();
+      
+        if (fetchErr) {
+          console.error(`Error fetching workload for ${e.empid}:`, fetchErr.message);
+          continue;
+        }
+      
+        const currentWorkload = data?.workload ?? 0;
+      
+        // Now, increment it by 10
+        const { error: updateErr } = await supabase
+          .from('employees')
+          .update({ workload: currentWorkload + 10 })
           .eq('empid', e.empid);
+      
+        if (updateErr) {
+          console.error(`Error updating workload for ${e.empid}:`, updateErr.message);
+        }
       }
   
       return res.status(200).json({

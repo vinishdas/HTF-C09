@@ -33,7 +33,7 @@ router.post('/', async (req, res) => {
       success: true,
       message: 'Login successful',
       user: {
-        id: user.Empid,
+        id: user.empid,
         name: user.Username,
         role: user.role,
       },
