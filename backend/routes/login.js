@@ -4,6 +4,7 @@ const router = express.Router();
 const supabase = require('../db');
 
 router.post('/', async (req, res) => {
+  console.log("hye");
   try {
     const { Username, password } = req.body;
 
@@ -27,7 +28,7 @@ router.post('/', async (req, res) => {
     if (!isMatch) {
       return res.status(401).json({ success: false, message: 'Incorrect password' });
     }
-
+  
     res.status(200).json({
       success: true,
       message: 'Login successful',
