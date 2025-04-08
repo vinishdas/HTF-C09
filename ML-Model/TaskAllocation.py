@@ -99,7 +99,6 @@ def create_schedule(employees, tasks, constraints, days=5):
 
     # Solve
     status = solver.Solve(model)
-    print(status, cp_model.FEASIBLE, cp_model.OPTIMAL)
     if status in [cp_model.FEASIBLE, cp_model.OPTIMAL]:
         schedule = defaultdict(lambda: defaultdict(list))
         for (t_id, e_id, d), var in x.items():
@@ -110,3 +109,52 @@ def create_schedule(employees, tasks, constraints, days=5):
     else:
         return "\u274c No solution found. Try adjusting constraints."
 
+#calling the model using some hard coded data 
+employees=[
+    {"id": 3, "name": "David", "skills": {"ReactJS", "Debugging", "Node.js", "DB Knowledge"}, "skill_level": 8, "workload":2},
+    {"id": 4, "name": "Eve", "skills": {"Jest/Mocha", "PowerPoint", "Business Understanding"}, "skill_level": 6, "workload":3},
+    {"id": 5, "name": "Frank", "skills": {"Code Quality", "Communication", "Cybersecurity"}, "skill_level": 9, "workload":1},
+    {"id": 6, "name": "Grace", "skills": {"Logical Thinking", "Jest/Mocha"},"skill_level": 7, "workload":2},
+    {"id": 7, "name": "Hank","skills": {"ReactJS"},"skill_level": 7, "workload":0},
+    {"id": 8,"name": "Ivy","skills": {"Code Quality", "Communication"},"skill_level": 9,"role": "senior","experience": ["code_review"],"workload":2},
+    {"id": 9,"name": "Jake","skills": {"Node.js", "DB Knowledge"},"skill_level": 7, "workload":1}
+]
+
+tasks=[
+    {"id": "IT01", "name": "Frontend Bug Fix", "skills": {"ReactJS", "Debugging"}, "duration": 3, "urgent": True},
+    {"id": "IT02", "name": "Backend API Development", "skills": {"Node.js", "DB Knowledge"}, "duration": 6, "urgent": False},
+    {"id": "IT03", "name": "Write Unit Tests", "skills": {"Jest/Mocha", "Logical Thinking"}, "duration": 4, "urgent": False},
+    {"id": "IT04", "name": "Client Presentation Preparation", "skills": {"PowerPoint", "Business Understanding"}, "duration": 2, "urgent": True},
+    {"id": "IT05", "name": "Code Review", "skills": {"Code Quality", "Communication"}, "duration": 1, "urgent": False},
+    {"id": "IT06", "name": "Security Audit", "skills": {"Cybersecurity"}, "duration": 5, "urgent": True}
+]
+
+constraints = [
+    # IT01 - Frontend Bug Fix
+    {"type": "min_skill_level", "value": 7, "skills": ["ReactJS"], "tasks": ["IT01"]},
+    {"type": "no_duplicate_task_type", "task_prefix": "IT01", "tasks": ["IT01"], "message": "Cannot assign more than 2 bug tasks per day"},  # Assuming task prefix is sufficient
+
+    # IT02 - Backend API Development
+    {"type": "max_total_workload_before_task", "value": 6, "tasks": ["IT02"], "message": "Must be assigned only if workload < 6 hrs/day"},
+
+    # IT03 - Write Unit Tests
+    {"type": "must_be_scheduled_after", "dependency": "Feature Implementation", "tasks": ["IT03"], "message": "Must be done after feature is built"},
+    {"type": "min_skill_level", "value": 6, "tasks": ["IT03"]},
+
+    # IT04 - Client Presentation Preparation
+    {"type": "min_skill_level", "value": 5, "tasks": ["IT04"]},
+    {"type": "must_finish_before_deadline", "deadline_offset_hours": 24, "tasks": ["IT04"], "message": "Must be completed 24 hrs before meeting"},
+
+    # IT05 - Code Review
+    {"type": "role_based_assignment", "role": "senior_dev", "tasks": ["IT05"], "message": "Only senior developers can do code review"},
+    {"type": "must_have_previous_experience", "experience": "code_review", "tasks": ["IT05"], "message": "Must have reviewed code before"},
+
+    # IT06 - Security Audit
+    {"type": "min_skill_level", "value": 7, "skills": ["Cybersecurity"], "tasks": ["IT06"]},
+    {"type": "max_task_frequency", "value": 1, "interval": "week", "tasks": ["IT06"], "message": "Cannot exceed 1 audit per user per week"},
+    {"type": "minimize_workload","weight": 1.0 }# You can tune this weight to prioritize workload optimization
+]
+
+schedule = create_schedule(employees, tasks, constraints)
+from pprint import pprint
+pprint(schedule)
