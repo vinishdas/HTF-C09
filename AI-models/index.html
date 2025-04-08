@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Project Employee Matcher</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 30px;
+    }
+    h1 {
+      color: #2c3e50;
+    }
+    input, button {
+      padding: 10px;
+      margin: 10px 0;
+    }
+    .employee, .task-box {
+      border: 1px solid #ddd;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 5px;
+      background: #f7f7f7;
+    }
+    .task-box {
+      background-color: #e0f7fa;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🔍 Employee Matcher for Projects</h1>
+
+  <label for="skills">Enter Required Skills (comma separated):</label><br>
+  <input type="text" id="skills" placeholder="e.g. Python, SQL, React" size="50"/>
+  <br>
+  <button onclick="getMatches()">Find Best Matches</button>
+
+  <div id="results"></div>
+
+  <script>
+    function getMatches() {
+      const skillInput = document.getElementById("skills").value;
+      const skills = skillInput.split(",").map(s => s.trim());
+
+      fetch("http://127.0.0.1:5000/score", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ Skills_Required: skills })
+      })
+      .then(res => res.json())
+      .then(data => {
+        const resultsDiv = document.getElementById("results");
+        resultsDiv.innerHTML = `
+          <h3>🧑‍🤝‍🧑 Selected Team: <span style="color: green">${data.selected_team}</span></h3>
+          <h4>📌 Task Allocation:</h4>
+        `;
+
+        for (const [skill, person] of Object.entries(data.task_allocation)) {
+          resultsDiv.innerHTML += `
+            <div class="task-box">
+              🛠️ <strong>${skill}</strong> → 👤 ${person}
+            </div>
+          `;
+        }
+
+        resultsDiv.innerHTML += `<h4 style="margin-top:20px;">👨‍💻 Team Members:</h4>`;
+        data.team_members.forEach(member => {
+          resultsDiv.innerHTML += `
+            <div class="employee">
+              <strong>${member.name}</strong><br>
+              🎯 Score: ${member.score.toFixed(4)}<br>
+              💼 Skills: ${member.skills.join(", ")}
+            </div>
+          `;
+        });
+      })
+      .catch(err => {
+        alert("❌ Error connecting to server");
+        console.error(err);
+      });
+    }
+  </script>
+
+</body>
+</html>

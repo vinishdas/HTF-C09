@@ -1,0 +1,14 @@
+Employee_ID,Employee_Name,Team_ID,Team_Lead,Manager_ID,Department,Skills,Skill_Level,Experience_Years,Current_Project_ID,Availability_Status,Workload_Percentage,Stress_Level,Preferred_Tech_Stack,Joining_Date,Location,Available_From
+101,Arjun,Team_A,Yes,101,Frontend,"Python,Node.js,React",4.5,7,Project_X,Busy,90,7,"React,Node.js",7/21/2018,Bangalore,4/4/2025
+102,Raj,TEAM_A,No,101,Frontend,"React,HTML,CSS",3.8,3,None,Available,40,3,React,5/12/2020,Bangalore,4/4/2025
+103,Ria,TEAM_A,No,101,Frontend,"SQL,Python",4.2,4,None,Available,30,2,SQL,3/18/2019,Hyderabad,4/4/2025
+201,Anant,TEAM_B,Yes,101,Backend,"Java, Spring, MySQL",4.9,7,Project_Y,Busy,95,8,Spring,6/10/2017,Mumbai,30/4/2025
+202,Neha,TEAM_B,No,101,Backend,"JavaScript,Vue,Node.js",4,2,None,Busy,80,5,Vue,1/25/2021,Mumbai,30/4/2025
+203,Kisha,TEAM_C,Yes,101,Backend,"JavaScript,Vue,Node.js",4,3,None,Available,80,4,Vue,1/25/2025,Mumbai,4/4/2025
+204,Sham,TEAM_C,No,101,Backend,"Java, Spring, MySQL",4.5,3,None,Available,80,5,Spring,1/25/2025,Mumabi,4/4/2025
+205,Nellam,TEAM_D,Yes,101,Frontend,"Python,Node.js,React",4.8,10,None,Available,70,5,Python,1/25/2024,Bangalore,1/4/2025
+206,Meena,TEAM_D,No,101,Frontend,"React,HTML,CSS,Angular",4,7,None,Available,75,7,React,3/7/2022,Bangalore,1/4/2025
+207,Sneha,TEAM_D,No,101,Frontend,"SQL,Python",4,7,None,Default,50,5,Spython,3/7/2022,Bangalore,1/4/2025
+208,Aryan,TEAM_E,Yes,101,Backend,"Netbeans, Rust",4.3,5,None,Default,80,8,Rust,3/7/2022,Bangalore,7/4/2025
+209,John,TEAM_E,No,101,Backend,"Elixer,Kotlin",3.9,4,None,Default,69,7,Kotlin,3/7/2022,Bangalore,7/4/2025
+210,Anya,TEAM_E,No,101,Backend,"SpringBoot,Django",4,2,None,Default,70,5,SpringBoot,3/5/2022,Bangalore,7/4/2025
