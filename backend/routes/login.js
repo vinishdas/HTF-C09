@@ -4,7 +4,7 @@ const router = express.Router();
 const supabase = require('../db');
 
 router.post('/', async (req, res) => {
-  console.log("hye");
+   
   try {
     const { Username, password } = req.body;
 

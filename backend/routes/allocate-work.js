@@ -6,23 +6,24 @@ const { InferenceClient } = require("@huggingface/inference");
 const hf = new InferenceClient("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");
 
 // 📦 Manager allocates work
-router.post('/allocate-work', async (req, res) => {
+router.post('/', async (req, res) => {
     const {
       work_type, // "shift" or "non-shift"
       start_date,
       end_date,
       employees_required,
-      min_experience,
-      max_experience,
+      min_skill_level,
+      max_skill_level,
       description,
       shift_group_size, // only for shift-based
-      project_title // only for non-shift
+      project_title,    // only for non-shift
+      project_id        // added for tracking non-shift project
     } = req.body;
   
     try {
       const { data: allEmployees, error: empErr } = await supabase
         .from('employees')
-        .select('empid, name, experience, skills, workload, work_type')
+        .select('empid, name,work_type,workload,skils,skill_level ')
         .eq('work_type', work_type);
   
       if (empErr || !allEmployees) {
@@ -30,39 +31,45 @@ router.post('/allocate-work', async (req, res) => {
       }
   
       const filtered = allEmployees.filter(emp =>
-        emp.experience >= min_experience &&
-        emp.experience <= max_experience
+        emp.skill_level >= min_skill_level &&
+        emp.skill_level <= max_skill_level
       );
   
+      // 🔁 SHIFT-BASED WORK
       if (work_type === 'shift') {
-        // 🧠 Create shift schedule in groups based on shift_group_size
         const days = getDatesInRange(start_date, end_date);
-        let shiftAllocations = [];
   
-        let employeeIndex = 0;
-        for (let day of days) {
-          let groupNumber = 1;
+        const aiPrompt = `
+  You are an AI assistant helping a manager assign employees to shift-based work.
+  Work Dates: ${start_date} to ${end_date}
+  Employees per Shift Group: ${shift_group_size}
+  Special Instructions: ${description}
   
-          while (employeeIndex < filtered.length) {
-            const group = filtered.slice(employeeIndex, employeeIndex + shift_group_size);
-            if (group.length === 0) break;
+  Available Employees:
+  ${JSON.stringify(filtered, null, 2)}
   
-            for (let emp of group) {
-              shiftAllocations.push({
-                shift_date: day,
-                assigned_to: emp.empid,
-                shift_group: `Group-${groupNumber}`
-              });
-            }
+  Assign employees to groups in a rotating schedule where each group has a max of ${shift_group_size}.
+  Distribute shifts fairly and consider any relevant preferences from the manager description.
+  Return format:
+  [
+    { "shift_date": "YYYY-MM-DD", "assigned_to": "E101", "shift_group": "Group-1" },
+    ...
+  ]
+  `;
   
-            groupNumber++;
-            employeeIndex += shift_group_size;
-          }
+        const hfResponse = await hf.chatCompletion({
+          provider: "novita",
+          model: "deepseek-ai/DeepSeek-V3-0324",
+          messages: [{ role: "user", content: aiPrompt }],
+          max_tokens: 1000
+        });
   
-          employeeIndex = 0; // reset for next day
-        }
+        const responseText = hfResponse.choices?.[0]?.message?.content;
+        const jsonMatch = responseText.match(/\[[\s\S]*\]/);
+        if (!jsonMatch) throw new Error("No valid JSON array found in AI response");
   
-        // ✅ Insert into `shifts` table
+        const shiftAllocations = JSON.parse(jsonMatch[0]);
+  
         const { error: insertErr } = await supabase
           .from('shifts')
           .insert(shiftAllocations);
@@ -73,16 +80,17 @@ router.post('/allocate-work', async (req, res) => {
   
         return res.status(200).json({
           success: true,
-          message: 'Shift-based schedule created',
+          message: 'Shift-based schedule created using AI',
           data: shiftAllocations
         });
       }
   
-      // 🔮 Non-shift-based: Use AI to select best employees
+      // 🧠 NON-SHIFT-BASED WORK
       const prompt = `
-  You are an AI assistant helping a manager assign employees to a new non-shift based project.
+  You are an AI assistant helping a manager assign employees to a non-shift project.
   
   Project Title: ${project_title}
+  Project ID: ${project_id}
   Duration: ${start_date} to ${end_date}
   Number of Employees Required: ${employees_required}
   
@@ -95,13 +103,13 @@ router.post('/allocate-work', async (req, res) => {
   Each employee has:
   - empid
   - name
-  - experience (in years)
+  - skill_level (1 to 10)
   - skills (array)
   - workload (0 to 100)
   
   Please select the best-fit employees for this project based on:
   - Matching skills mentioned in the description
-  - Experience level suitable for the project
+  - Skill level suitable for the project
   - Lower workload preferred
   
   Respond in valid JSON like:
@@ -116,11 +124,8 @@ router.post('/allocate-work', async (req, res) => {
       const hfResponse = await hf.chatCompletion({
         provider: "novita",
         model: "deepseek-ai/DeepSeek-V3-0324",
-        
-        
-        
         messages: [{ role: "user", content: prompt }],
-        max_tokens: 800,
+        max_tokens: 1000
       });
   
       const responseText = hfResponse.choices?.[0]?.message?.content;
@@ -130,9 +135,9 @@ router.post('/allocate-work', async (req, res) => {
       const parsed = JSON.parse(jsonMatch[0]);
       const selected = parsed.selected_employees;
   
-      // ✅ Insert tasks for selected employees
       const taskInsertData = selected.map(e => ({
         assigned_to: e.empid,
+        project_id,
         project_title,
         start_date,
         end_date,
@@ -147,11 +152,11 @@ router.post('/allocate-work', async (req, res) => {
         return res.status(500).json({ success: false, error: taskErr.message });
       }
   
-      // 🧮 Optionally update workload (e.g., add +10)
+      // 🧮 Update workload for each selected employee
       for (let e of selected) {
         await supabase
           .from('employees')
-          .update({ workload: supabase.rpc('increment_workload', { emp_id: e.empid, value: 10 }) })
+          .update({ workload: supabase.rpc('increment_workload', { empid: e.empid, value: 10 }) })
           .eq('empid', e.empid);
       }
   
@@ -172,7 +177,7 @@ router.post('/allocate-work', async (req, res) => {
     }
   });
   
-  // 📅 Utility to get all dates between range
+  // 📅 Utility: Generate all dates in range
   function getDatesInRange(start, end) {
     const date = new Date(start);
     const endDate = new Date(end);

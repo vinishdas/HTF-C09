@@ -8,13 +8,13 @@ const hf = new InferenceClient("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");
 
 // 🟢 Submit Leave Request (Employee)
 router.post('/', async (req, res) => {
-  const { user_id, reason, from_date, to_date } = req.body;
+  const { empid, reason, from_date, to_date } = req.body;
 
   const { data, error } = await supabase
     .from('Request')
     .insert([{
       leaveId: uuidv4(),
-      EmpId,
+      empid,
       Username,
       role,
       currentProjectId,
