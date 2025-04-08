@@ -19,7 +19,7 @@ const Emp_view = () => {
          <li className='mr-4'>Dashboard</li>
         </ul></div>
         <div className=' flex items-center   justify-end ml-auto'>
-            <input type="text" placeholder='Search'  className=' mr-2 rounded-md border-2 border-2 w-72 bg-gray-100 border-dash items-center p-2'/>
+            <input type="text" placeholder='Search'  className=' mr-2 rounded-md  border-2 w-72 bg-gray-100 border-dash items-center p-2'/>
             <div className='flex items-center mr-2'><h1 style={{color: '#7789b4' }} className='font-bold text-2xl'>{name}</h1><img width="50px" src="https://img.freepik.com/free-vector/blue-circle-with-white-user_78370-4707.jpg?uid=R124920817&ga=GA1.1.1314910849.1725714366&semt=ais_hybrid&w=740" alt="" /></div>
         </div>
  </div>
