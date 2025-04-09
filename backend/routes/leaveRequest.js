@@ -8,20 +8,17 @@ const hf = new InferenceClient("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");
 
 // 🟢 Submit Leave Request (Employee)
 router.post('/', async (req, res) => {
-  const { empid, reason, from_date, to_date } = req.body;
+  const { empid, reason, start_date, end_date } = req.body;
 
   const { data, error } = await supabase
-    .from('Request')
+    .from('leave_requests')
     .insert([{
-      leaveId: uuidv4(),
+       
       empid,
-      Username,
-      role,
-      currentProjectId,
       start_date,
       end_date,
-      discription,
-      status: 'pending'
+      status: 'pending',
+      reason,
     }]);
 
   if (error) {
@@ -32,16 +29,16 @@ router.post('/', async (req, res) => {
 });
 
 // 🔵 View Requests (Employee/Manager)
-router.get('/:EmpId/:role', async (req, res) => {
-  const { EmpId, role } = req.params;
+router.get('/:empid/:role', async (req, res) => {
+  const { empid, role } = req.params;
 
   let query = supabase.from('leave_requests').select('*');
 
   if (role !== 'manager') {
-    query = query.eq('EmpId', EmpId); // employee → only their requests
+    query = query.eq('empid', empid); // employee → only their requests
   }
 
-  const { data, error } = await query.order('created_at', { ascending: false });
+  const { data, error } = await query.order('start_date', { ascending: false });
 
   if (error) {
     return res.status(500).json({ success: false, error: error.message });
@@ -137,7 +134,7 @@ Redistribute the work fairly so that employees with lower workload get more of t
       ]
 
 
-      
+
     }
     `;
     try {
