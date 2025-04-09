@@ -1,7 +1,17 @@
 // src/components/Navbar.jsx
-import React from 'react';
+import React from "react";
+import { useNavigate } from "react-router-dom"; // ✅ Import this
 
-const Navbar = ({ name }) => {
+const Navbar = ({ name, empid, role }) => {
+  const navigate = useNavigate();
+
+  const handleRequestClick = () => {
+    if (empid && role) {
+      navigate(`/Request`, { state: { empid, role } });
+    } else {
+      console.warn("Missing empid or role");
+    }
+  };
   return (
     <div className="flex border-2 rounded shadow-lg w-full h-16 text-black">
       {/* Company name + logo */}
@@ -17,9 +27,14 @@ const Navbar = ({ name }) => {
 
       {/* Navigation links */}
       <div className="flex">
-        <ul style={{ color: '#7789b4' }} className="flex items-center ml-12 text-lg">
+        <ul
+          style={{ color: "#7789b4" }}
+          className="flex items-center ml-12 text-lg"
+        >
           <li className="mr-4 cursor-pointer">Your Work</li>
-          <li className="mr-4 cursor-pointer">Projects</li>
+          <li className="mr-4 cursor-pointer">
+            <button onClick={handleRequestClick}>Request</button>
+          </li>
         </ul>
       </div>
 
@@ -31,7 +46,7 @@ const Navbar = ({ name }) => {
           className="mr-2 rounded-md border-2 w-72 bg-gray-100 border-dashed p-2"
         />
         <div className="flex items-center mr-2">
-          <h1 style={{ color: '#7789b4' }} className="font-bold text-2xl mr-2">
+          <h1 style={{ color: "#7789b4" }} className="font-bold text-2xl mr-2">
             {name}
           </h1>
           <img

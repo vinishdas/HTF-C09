@@ -20,6 +20,7 @@ import ManagerDashboard from './ManagerDashboard';
 import ProjectDetails from './ProjectDetails';
 import CreatePlane from './CreatePlane';
 import ShiftDetails from './ShiftDetails';
+import Request from './Request';
 const App = () => {
   return (
     <Router>
@@ -30,6 +31,7 @@ const App = () => {
         <Route path="/ProjectDetails" element = {<ProjectDetails/>}/>
         <Route path ="/create-plan" element = {<CreatePlane/>}/>
         <Route path ="/shiftdetails" element = {<ShiftDetails/>}/>
+      <Route path = "/Request" element={<Request/>}/>
       </Routes>
     </Router>
     // <EmployeeMatcher/>

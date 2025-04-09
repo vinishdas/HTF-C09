@@ -13,7 +13,7 @@ const Emp_view = () => {
     
     return(
         <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50">
-            <Navbar name={name}></Navbar>
+            <Navbar name={name} empid={id} role ={role}></Navbar>
             
             <div id="main" className='flex flex-col md:flex-row'>
                 {/* Sidebar */}

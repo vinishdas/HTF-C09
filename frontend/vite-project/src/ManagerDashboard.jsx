@@ -55,7 +55,7 @@ const ManagerDashboard = () => {
     
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50">
-      <Navbar name={name} />
+      <Navbar name={name} empid= {id} role= {role} />
       <div className="container mx-auto p-6">
         <div className="bg-white rounded-xl shadow-md p-6 mb-8">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
