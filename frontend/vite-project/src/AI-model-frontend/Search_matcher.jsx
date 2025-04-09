@@ -1,10 +1,14 @@
 import { useState } from "react";
 
+
+
 export default function EmployeeMatcher() {
   const [skillsInput, setSkillsInput] = useState("");
   const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [notified, setNotified] = useState([]);
+
 
   const getMatches = async () => {
     setError("");
@@ -30,6 +34,19 @@ export default function EmployeeMatcher() {
     }
   };
 
+  const assignJob = async (person, task) => {
+    await fetch('http://localhost:3000/assign-job', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ person, task })
+    });
+  
+    // Update state to mark this person as notified
+    setNotified((prev) => [...prev, person]);
+  };
+  
+
+  
   return (
     <div className="max-w-3xl mx-auto p-8 text-gray-800 font-sans">
       <h1 className="text-3xl font-bold text-blue-800 mb-6">🔍 Employee Matcher for Projects</h1>
@@ -65,18 +82,40 @@ export default function EmployeeMatcher() {
             🧑‍🤝‍🧑 Selected Team: <span className="underline">{results.selected_team}</span>
           </h3>
 
-          <h4 className="text-lg font-semibold mb-2">📌 Task Allocation:</h4>
+          <h4 className="text-lg font-semibold mb-2">📌Task Allocation:</h4>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {Object.entries(results.task_allocation).map(([task, person]) => (
-              <div
-                key={task}
-                className="p-4 bg-cyan-50 border border-cyan-300 rounded shadow-sm"
-              >
-                🛠️ <span className="font-semibold">{task}</span> → 👤{" "}
-                <span className="text-blue-800 font-medium">{person}</span>
-              </div>
-            ))}
+          {(() => {
+  const uniquePersons = new Set();
+  return Object.entries(results.task_allocation)
+    .filter(([task, person]) => {
+      if (uniquePersons.has(person)) return false;
+      uniquePersons.add(person);
+      return true;
+    }) 
+    .map(([task, person]) => (
+      <div
+        key={person}
+        className="p-4 bg-cyan-50 border border-cyan-300 rounded shadow-sm"
+      >
+        👤 <span className="text-blue-800 text-xl">
+          {person} : {task}{" "}
+          <button
+            style={{
+              backgroundColor: notified.includes(person) ? "green" : "#363636",
+            }}
+            className="border-2 rounded-md p-2 text-center text-white font-bold"
+            onClick={() => assignJob(person, task)}
+          >
+            {notified.includes(person) ? "Notified ✅" : "Notify"}
+          </button>
+        </span>
+      </div>
+    ));
+    
+})()}
+
           </div>
+
 
           <h4 className="text-lg font-semibold mt-8 mb-2">👨‍💻 Team Members:</h4>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
