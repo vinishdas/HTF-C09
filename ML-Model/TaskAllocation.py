@@ -109,7 +109,7 @@ def create_schedule(employees, tasks, constraints, days=5):
     else:
         return "\u274c No solution found. Try adjusting constraints."
 
-#calling the model using some hard coded data 
+#calling the model using some hard coded data
 employees=[
     {"id": 3, "name": "David", "skills": {"ReactJS", "Debugging", "Node.js", "DB Knowledge"}, "skill_level": 8, "workload":2},
     {"id": 4, "name": "Eve", "skills": {"Jest/Mocha", "PowerPoint", "Business Understanding"}, "skill_level": 6, "workload":3},
@@ -158,3 +158,62 @@ constraints = [
 schedule = create_schedule(employees, tasks, constraints)
 from pprint import pprint
 pprint(schedule)
+
+# project= "game"
+# employees= [
+#     {
+#       "id": 101,
+#       "name": "Alice",
+#       "skills": ["game development", "AI", "compiler design"],
+#       "skill_level": 4,
+#       "workload": 10
+#     },
+#     {
+#       "id": 102,
+#       "name": "Bob",
+#       "skills": ["art", "design"],
+#       "skill_level": 3,
+#       "workload": 5
+#     }
+#   ]
+# tasks= [
+#     {
+#       "id": 1,
+#       "name": "Develop Game Engine",
+#       "skills": ["game development", "compiler design"],
+#       "duration": 40
+#     },
+#     {
+#       "id": 2,
+#       "name": "Design Game Graphics",
+#       "skills": ["art", "design"],
+#       "duration": 30
+#     },
+#     {
+#       "id": 3,
+#       "name": "Implement AI",
+#       "skills": ["AI", "game development"],
+#       "duration": 35
+#     }
+#   ]
+  
+# constraints= [
+#     {
+#       "type": "min_skill_level",
+#       "tasks": [1, 3],
+#       "value": 3
+#     },
+#     {
+#       "type": "max_hours_per_day",
+#       "tasks": [2],
+#       "value": 8
+#     },
+#     {
+#       "type": "no_duplicate_task_type",
+#       "tasks": [1, 2, 3]
+#     }
+#   ]
+
+# schedule = create_schedule(employees, tasks, constraints)
+# from pprint import pprint
+# pprint(schedule)
