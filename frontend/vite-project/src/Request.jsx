@@ -5,18 +5,26 @@ import axios from 'axios';
 const Request = () => {
   const location = useLocation();
   const { empid, role } = location.state || {};
-  
+
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState({});
-  
+  const [aiOutput, setAiOutput] = useState({});
+  const [showNewRequestForm, setShowNewRequestForm] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
+    reason: '',
+    start_date: '',
+    end_date: ''
+  });
+
   useEffect(() => {
     fetchRequests();
   }, [empid, role]);
-  
+
   const fetchRequests = async () => {
     if (!empid || !role) return;
-    
+
     try {
       setLoading(true);
       const res = await axios.get(`http://localhost:3000/leave/${empid}/${role}`);
@@ -33,18 +41,24 @@ const Request = () => {
   const updateRequestStatus = async (requestId, newStatus) => {
     try {
       setUpdating(prev => ({ ...prev, [requestId]: true }));
-      
+
       const response = await axios.put(`http://localhost:3000/leave/${requestId}`, {
         status: newStatus
       });
-      
+
       if (response.data && response.data.success) {
-        // Update local state to reflect the change
         setRequests(prevRequests =>
           prevRequests.map(req =>
             req.id === requestId ? { ...req, status: newStatus } : req
           )
         );
+
+        if (response.data.ai_output?.reassignments) {
+          setAiOutput(prev => ({
+            ...prev,
+            [requestId]: response.data.ai_output.reassignments
+          }));
+        }
       }
     } catch (error) {
       console.error(`Failed to update request status:`, error);
@@ -53,7 +67,47 @@ const Request = () => {
       setUpdating(prev => ({ ...prev, [requestId]: false }));
     }
   };
-  
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmitRequest = async (e) => {
+    e.preventDefault();
+
+    if (!formData.reason || !formData.start_date || !formData.end_date) {
+      alert('Please fill out all fields');
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+
+      const response = await axios.post('http://localhost:3000/leave/', {
+        empid,
+        reason: formData.reason,
+        start_date: formData.start_date,
+        end_date: formData.end_date
+      });
+
+      if (response.data && response.data.success) {
+        setFormData({ reason: '', start_date: '', end_date: '' });
+        setShowNewRequestForm(false);
+        fetchRequests();
+        alert('Leave request submitted successfully!');
+      }
+    } catch (error) {
+      console.error('Failed to submit leave request:', error);
+      alert('Failed to submit leave request. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'pending':
@@ -70,113 +124,79 @@ const Request = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-blue-100 p-6 md:p-8">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold text-indigo-900 mb-6 border-b-2 border-indigo-200 pb-2 transform transition-all animate-fade-in-down">
-          {role?.toLowerCase() === 'manager' ? 'All Leave Requests' : 'Your Leave Requests'}
-        </h1>
-        
+        <div className="flex justify-between items-center mb-6 border-b-2 border-indigo-200 pb-2">
+          <h1 className="text-3xl font-bold text-indigo-900">
+            {role?.toLowerCase() === 'manager' ? 'All Leave Requests' : 'Your Leave Requests'}
+          </h1>
+
+          {role?.toLowerCase() !== 'manager' && (
+            <button
+              onClick={() => setShowNewRequestForm(!showNewRequestForm)}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-md shadow-md transition"
+            >
+              {showNewRequestForm ? 'Cancel' : 'New Request'}
+            </button>
+          )}
+        </div>
+
+        {/* New Leave Request Form */}
+        {showNewRequestForm && (
+          <div className="bg-white rounded-lg shadow-lg p-6 mb-8 border border-indigo-100">
+            <h2 className="text-xl font-semibold text-indigo-800 mb-4">New Leave Request</h2>
+            <form onSubmit={handleSubmitRequest} className="space-y-4">
+              <input type="date" name="start_date" value={formData.start_date} onChange={handleInputChange} className="w-full border px-3 py-2 rounded" required />
+              <input type="date" name="end_date" value={formData.end_date} onChange={handleInputChange} className="w-full border px-3 py-2 rounded" required />
+              <textarea name="reason" value={formData.reason} onChange={handleInputChange} placeholder="Reason" className="w-full border px-3 py-2 rounded" rows="3" required />
+              <button type="submit" className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded" disabled={submitting}>
+                {submitting ? 'Submitting...' : 'Submit Request'}
+              </button>
+            </form>
+          </div>
+        )}
+
+        {/* Requests List */}
         {loading ? (
-          <div className="flex justify-center items-center h-40">
-            <div className="animate-pulse flex space-x-4">
-              <div className="rounded-full bg-indigo-300 h-12 w-12"></div>
-              <div className="flex-1 space-y-4 py-1">
-                <div className="h-4 bg-indigo-300 rounded w-3/4"></div>
-                <div className="space-y-2">
-                  <div className="h-4 bg-indigo-300 rounded"></div>
-                  <div className="h-4 bg-indigo-300 rounded w-5/6"></div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <p className="text-center">Loading...</p>
         ) : requests.length === 0 ? (
-          <div className="bg-white rounded-lg shadow-lg p-8 text-center border border-indigo-100 transition-all duration-300 hover:shadow-xl">
-            <svg className="w-16 h-16 mx-auto text-indigo-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-            </svg>
-            <p className="text-gray-600 text-lg">No leave requests to display.</p>
-          </div>
+          <p className="text-center text-gray-500">No leave requests found.</p>
         ) : (
-          <div className="grid gap-6 md:grid-cols-2">
-            {requests.map((req, index) => (
-              <div 
-                key={req.id} 
-                className="bg-white rounded-lg shadow-md border border-indigo-100 overflow-hidden transform transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
-                style={{ animationDelay: `${index * 100}ms` }}
-              >
-                <div className="bg-indigo-600 p-3 text-white font-medium flex justify-between items-center">
-                  <span className="truncate">Leave Request #{req.id}</span>
-                  <span className={`text-xs px-2 py-1 rounded-full ${getStatusColor(req.status)}`}>
-                    {req.status.toUpperCase()}
-                  </span>
+          requests.map((request) => (
+            <div key={request.id} className="bg-white shadow-md rounded p-4 mb-4 border border-gray-200">
+              <div className="flex justify-between items-center">
+                <div>
+                  <p className="font-semibold">From: {request.start_date} To: {request.end_date}</p>
+                  <p className="text-sm text-gray-600">Reason: {request.reason}</p>
+                  <p className={`inline-block mt-1 px-2 py-1 text-xs rounded border ${getStatusColor(request.status)}`}>
+                    {request.status.toUpperCase()}
+                  </p>
                 </div>
-                <div className="p-5 space-y-3">
-                  <div className="flex items-center">
-                    <svg className="w-5 h-5 text-indigo-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                    </svg>
-                    <p className="text-gray-700"><span className="font-medium">Employee ID:</span> {req.EmpId}</p>
+                {role?.toLowerCase() === 'manager' && request.status === 'pending' && (
+                  <div className="space-x-2">
+                    <button onClick={() => updateRequestStatus(request.id, 'accepted')} disabled={updating[request.id]} className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded">
+                      Accept
+                    </button>
+                    <button onClick={() => updateRequestStatus(request.id, 'rejected')} disabled={updating[request.id]} className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded">
+                      Reject
+                    </button>
                   </div>
-                  <div className="flex items-center">
-                    <svg className="w-5 h-5 text-indigo-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                    </svg>
-                    <p className="text-gray-700"><span className="font-medium">From:</span> {req.start_date}</p>
-                  </div>
-                  <div className="flex items-center">
-                    <svg className="w-5 h-5 text-indigo-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                    </svg>
-                    <p className="text-gray-700"><span className="font-medium">To:</span> {req.end_date}</p>
-                  </div>
-                  <div className="flex items-center">
-                    <svg className="w-5 h-5 text-indigo-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                    </svg>
-                    <p className="text-gray-700"><span className="font-medium">Reason:</span> {req.reason}</p>
-                  </div>
-                  
-                  {/* Action Buttons - Only show for pending requests and managers */}
-                  {role?.toLowerCase() === 'manager' && req.status === 'pending' && (
-                    <div className="mt-4 flex space-x-2 pt-3 border-t border-gray-100">
-                      <button
-                        onClick={() => updateRequestStatus(req.id, 'accepted')}
-                        disabled={updating[req.id]}
-                        className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white py-2 px-4 rounded-md transition-colors duration-200 flex justify-center items-center disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {updating[req.id] ? (
-                          <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                          </svg>
-                        ) : (
-                          <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                          </svg>
-                        )}
-                        Accept
-                      </button>
-                      <button
-                        onClick={() => updateRequestStatus(req.id, 'rejected')}
-                        disabled={updating[req.id]}
-                        className="flex-1 bg-rose-500 hover:bg-rose-600 text-white py-2 px-4 rounded-md transition-colors duration-200 flex justify-center items-center disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {updating[req.id] ? (
-                          <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                          </svg>
-                        ) : (
-                          <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
-                          </svg>
-                        )}
-                        Reject
-                      </button>
-                    </div>
-                  )}
-                </div>
+                )}
               </div>
-            ))}
-          </div>
+
+              {/* Show AI Reassignments if available */}
+              {aiOutput[request.id]?.length > 0 && (
+                <div className="mt-3 border-t pt-2 text-sm">
+                  <p className="font-medium text-indigo-700 mb-1">AI Suggested Reassignments:</p>
+                  <ul className="list-disc list-inside">
+                    {aiOutput[request.id].map((item, index) => (
+                      <li key={index}>
+                        {item.shift_date} — Assign to <strong>{item.new_assignee}</strong> ({item.work_type})
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          ))
         )}
       </div>
     </div>
